@@ -1,17 +1,18 @@
 import React from 'react';
 import { SidebarProvider } from '../components/ui/sidebar';
-import { SidebarLayout } from '../components/SidebarLayout';
+import { SidebarLayout } from '../components/Sidebar/SidebarLayout';
+import { HeaderLayout } from '@/components/Header/HeaderLayout';
 export const MainLayout = ({ children }) => {
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen">
-        <SidebarLayout></SidebarLayout>
-        <main className=" bg-amber-500 flex flex-1">
-          <header>
-            
-          </header>
-        </main>
-      </div>
+      <SidebarLayout />
+      <main className="  flex flex-1 flex-col">
+        <header className="p-3 h-auto bg-background flex justify-between text-foreground">
+          <HeaderLayout />
+        </header>
+
+        {children}
+      </main>
     </SidebarProvider>
   );
 };

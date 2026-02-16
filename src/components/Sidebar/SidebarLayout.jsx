@@ -12,7 +12,6 @@ import {
   SidebarMenuButton,
 } from '@/components/ui/sidebar';
 
-
 import { TicketMinus, LayoutDashboard, Receipt, ChartLine } from 'lucide-react';
 export const SidebarLayout = () => {
   const sidebarElements = [
@@ -37,11 +36,10 @@ export const SidebarLayout = () => {
     <Sidebar>
       <SidebarHeader className="flex flex-row p-4 items-center">
         <TicketMinus />
-        <span className='text-xl'>TicketManager</span>
+        <span className="text-xl">TicketManager</span>
       </SidebarHeader>
       <hr />
       <SidebarContent>
-     
         <SidebarGroup>
           <SidebarGroupLabel>Menu</SidebarGroupLabel>
           <SidebarGroupContent>
