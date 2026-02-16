@@ -10,15 +10,20 @@ export const Home = () => {
   ];
   return (
     <MainLayout>
-      <div>
-        <h1>Dashboard</h1>
+      <div className="text-foreground flex flex-col gap-3 p-4">
+        <h1 className="text-4xl bold">Dashboard</h1>
         <p>Estado general del estado de ventas</p>
       </div>
-
-      {salesInfo.map((item, index) => {
-        <ItemVariant key={index} title={item.title} number={item.number} icon={item.icon}></ItemVariant>
-      })}
-
+      <div className='flex gap-3 p-4'>
+        {salesInfo.map((item, index) => (
+          <ItemVariant
+            key={index}
+            title={item.title}
+            number={item.number}
+            icon={item.icon}
+          ></ItemVariant>
+        ))}
+      </div>
     </MainLayout>
   );
 };

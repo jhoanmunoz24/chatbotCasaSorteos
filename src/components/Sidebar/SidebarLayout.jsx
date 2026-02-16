@@ -36,7 +36,7 @@ export const SidebarLayout = () => {
     <Sidebar>
       <SidebarHeader className="flex flex-row p-4 items-center">
         <TicketMinus />
-        <span className="text-xl">TicketManager</span>
+        <span className="text-xl">Sorteos Manager</span>
       </SidebarHeader>
       <hr />
       <SidebarContent>
