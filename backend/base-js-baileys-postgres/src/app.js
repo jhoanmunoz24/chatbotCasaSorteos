@@ -2,7 +2,7 @@ import { join } from 'path'
 import { createBot, createProvider, createFlow, addKeyword, utils } from '@builderbot/bot'
 import { PostgreSQLAdapter as Database } from '@builderbot/database-postgres'
 import { BaileysProvider as Provider } from '@builderbot/provider-baileys'
-import 'dotenv/config'
+
 const PORT = process.env.PORT ?? 3008
 
 const discordFlow = addKeyword('doc').addAnswer(
@@ -51,7 +51,7 @@ const fullSamplesFlow = addKeyword(['samples', utils.setEvent('SAMPLES')])
     .addAnswer(`💪 I'll send you a lot files...`)
     .addAnswer(`Send image from Local`, { media: join(process.cwd(), 'assets', 'sample.png') })
     .addAnswer(`Send video from URL`, {
-        media: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExYTJ0ZGdjd2syeXAwMjQ4aWdrcW04OWlqcXI3Ynh1ODkwZ25zZWZ1dCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/LCohAb657pSdHv0Q5h/giphy.mp4',
+        media: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExYTJ0ZGdjd2syeXAwMjQ4aWdkcW04OWlqcXI3Ynh1ODkwZ25zZWZ1dCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/LCohAb657pSdHv0Q5h/giphy.mp4',
     })
     .addAnswer(`Send audio from URL`, { media: 'https://cdn.freesound.org/previews/728/728142_11861866-lq.mp3' })
     .addAnswer(`Send file from URL`, {
@@ -60,18 +60,17 @@ const fullSamplesFlow = addKeyword(['samples', utils.setEvent('SAMPLES')])
 
 const main = async () => {
     const adapterFlow = createFlow([welcomeFlow, registerFlow, fullSamplesFlow])
-
-    const adapterProvider = createProvider(Provider, {
-        version: [2, 3000, 1027934701]
-    })
-
+    
+    const adapterProvider = createProvider(Provider, 
+		{ version: [2, 3000, 1027934701] as any } 
+	)
     const adapterDB = new Database({
-        host: process.env.POSTGRES_DB_HOST,
-        user: process.env.POSTGRES_DB_USER,
-        database: process.env.POSTGRES_DB_NAME,
-        password: process.env.POSTGRES_DB_PASSWORD,
-        port: Number(process.env.POSTGRES_DB_PORT)
-    })
+       host: process.env.POSTGRES_DB_HOST,
+       user: process.env.POSTGRES_DB_USER,
+       database: process.env.POSTGRES_DB_NAME,
+       password: process.env.POSTGRES_DB_PASSWORD,
+       port: +process.env.POSTGRES_DB_PORT
+   })
 
     const { handleCtx, httpServer } = await createBot({
         flow: adapterFlow,
@@ -127,7 +126,7 @@ const main = async () => {
         })
     )
 
-    httpServer(Number(PORT))
+    httpServer(+PORT)
 }
 
 main()
