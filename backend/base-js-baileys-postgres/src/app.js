@@ -5,6 +5,7 @@ import {
   createFlow,
   addKeyword,
   utils,
+  EVENTS,
 } from '@builderbot/bot';
 import { BaileysProvider as Provider } from '@builderbot/provider-baileys';
 import { adapterDB } from './postgres-database.js';
@@ -12,75 +13,74 @@ import 'dotenv/config';
 
 const PORT = process.env.PORT ?? 3008;
 
-const discordFlow = addKeyword('doc').addAnswer(
-  [
-    'You can see the documentation here',
-    '📄 https://builderbot.app/docs \n',
-    'Do you want to continue? *yes*',
-  ].join('\n'),
-  { capture: true },
-  async (ctx, { gotoFlow, flowDynamic }) => {
-    if (ctx.body.toLocaleLowerCase().includes('yes')) {
-      return gotoFlow(registerFlow);
+
+
+const flowChooseNumber = addKeyword(EVENTS.ACTION).addAnswer(
+  'Si ya escogiste un numero por favor escribelo debajo,\n NOTA: Escribe solo el numero...',
+  {
+    capture: true,
+  },
+  async (ctx, { fallBack, flowDynamic }) => {
+    const fourDigits = /^[0-9]{4}$/;
+    if (!fourDigits.test(ctx.body.trim())) {
+      return fallBack(
+        '❌ Debe ser exactamente 4 dígitos numéricos (ej: 1234). Intenta nuevamente.'
+      );
     }
-    await flowDynamic('Thanks!');
-    return;
+    await flowDynamic(`
+          🎟️ *RESERVA DE NÚMERO CONFIRMADA*
+
+          Has seleccionado el número: *${ctx.body}*
+
+          💰 *Valor del número:* $10.000 COP
+
+          Para continuar con el proceso, por favor realiza el pago a cualquiera de los siguientes métodos:
+
+          📲 *Nequi:* 300 123 4567  
+          📲 *Daviplata:* 301 987 6543  
+          🏦 *Bancolombia Ahorros:* 123-456789-00  
+          🏦 *Transferencia Bancolombia:* 12345678901  
+          👤 *Titular:* Juan Pérez  
+          🆔 *CC:* 1.234.567.890  
+
+          📌 *Importante:*
+          Después de realizar el pago, envía el comprobante por este medio para validar tu participación.
+
+          ⏳ Tu número quedará reservado por 30 minutos.  
+          Si no se recibe el pago en ese tiempo, el número volverá a estar disponible.
+
+          ¡Gracias por participar en CASASORTEOS RIFAS! 🎉
+          `);
   }
 );
 
-const welcomeFlow = addKeyword(['hi', 'hello', 'hola'])
-  .addAnswer(`🙌 Hello welcome to this *Chatbot*`)
+
+
+// KILL TERMINAL BOT taskkill /F /IM node.exe
+const flowWelcome = addKeyword(EVENTS.WELCOME)
   .addAnswer(
-    [
-      'I share with you the following links of interest about the project',
-      '👉 *doc* to view the documentation',
-    ].join('\n'),
-    { delay: 800, capture: true },
-    async (ctx, { fallBack }) => {
-      if (!ctx.body.toLocaleLowerCase().includes('doc')) {
-        return fallBack('You should type *doc*');
-      }
-      return;
+    `Bienvenido a CASASORTEOS RIFAS \n
+   Estos son los numeros disponibles  `
+  )
+  .addAnswer(
+    ' ',
+    {
+      media:
+        'https://res.cloudinary.com/diptb0uza/image/upload/v1771442763/free-numbers_shkb7g.png',
     },
-    [discordFlow]
+    async (ctx, { fallBack, flowDynamic, gotoFlow}) => {
+      console.log(ctx.body);
+      await flowDynamic(`Tu numero Es: ${ctx.from}`);
+      await gotoFlow(flowChooseNumber)
+
+      
+    },
+    flowChooseNumber
+      
   );
 
-const registerFlow = addKeyword(utils.setEvent('REGISTER_FLOW'))
-  .addAnswer(
-    `What is your name?`,
-    { capture: true },
-    async (ctx, { state }) => {
-      await state.update({ name: ctx.body });
-    }
-  )
-  .addAnswer('What is your age?', { capture: true }, async (ctx, { state }) => {
-    await state.update({ age: ctx.body });
-  })
-  .addAction(async (_, { flowDynamic, state }) => {
-    await flowDynamic(
-      `${state.get('name')}, thanks for your information!: Your age: ${state.get('age')}`
-    );
-  });
-
-const fullSamplesFlow = addKeyword(['samples', utils.setEvent('SAMPLES')])
-  .addAnswer(`💪 I'll send you a lot files...`)
-  .addAnswer(`Send image from Local`, {
-    media: join(process.cwd(), 'assets', 'sample.png'),
-  })
-  .addAnswer(`Send video from URL`, {
-    media:
-      'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExYTJ0ZGdjd2syeXAwMjQ4aWdrcW04OWlqcXI3Ynh1ODkwZ25zZWZ1dCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/LCohAb657pSdHv0Q5h/giphy.mp4',
-  })
-  .addAnswer(`Send audio from URL`, {
-    media: 'https://cdn.freesound.org/previews/728/728142_11861866-lq.mp3',
-  })
-  .addAnswer(`Send file from URL`, {
-    media:
-      'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
-  });
-
 const main = async () => {
-  const adapterFlow = createFlow([welcomeFlow, registerFlow, fullSamplesFlow]);
+  const adapterFlow = createFlow([flowWelcome,flowChooseNumber]);
 
   const adapterProvider = createProvider(Provider, {
     version: [2, 3000, 1027934701],
