@@ -10,10 +10,28 @@ import {
 import { BaileysProvider as Provider } from '@builderbot/provider-baileys';
 import { adapterDB } from './postgres-database.js';
 import 'dotenv/config';
+import path from 'path';
+import fs from 'fs';
 
+import Groq from 'groq-sdk';
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 const PORT = process.env.PORT ?? 3008;
 
 
+
+const flowAnalyzeImage = addKeyword(EVENTS.MEDIA).addAction(
+  async (ctx, { flowDynamic, provider }) => {
+    await flowDynamic('📥 Recibiendo comprobante...');
+
+    const localPath = await provider.saveFile(ctx);
+
+    await flowDynamic('🔍 Analizando imagen...');
+
+    const result = await analyzeImage(localPath);
+
+    await flowDynamic(result);
+  }
+);
 
 const flowChooseNumber = addKeyword(EVENTS.ACTION).addAnswer(
   'Si ya escogiste un numero por favor escribelo debajo,\n NOTA: Escribe solo el numero...',
@@ -51,10 +69,10 @@ const flowChooseNumber = addKeyword(EVENTS.ACTION).addAnswer(
 
           ¡Gracias por participar en CASASORTEOS RIFAS! 🎉
           `);
+
+    await gotoFlow(flowAnalyzeImage)
   }
 );
-
-
 
 // KILL TERMINAL BOT taskkill /F /IM node.exe
 const flowWelcome = addKeyword(EVENTS.WELCOME)
@@ -68,19 +86,64 @@ const flowWelcome = addKeyword(EVENTS.WELCOME)
       media:
         'https://res.cloudinary.com/diptb0uza/image/upload/v1771442763/free-numbers_shkb7g.png',
     },
-    async (ctx, { fallBack, flowDynamic, gotoFlow}) => {
+    async (ctx, { fallBack, flowDynamic, gotoFlow }) => {
       console.log(ctx.body);
-      await flowDynamic(`Tu numero Es: ${ctx.from}`);
-      await gotoFlow(flowChooseNumber)
 
-      
+      await flowDynamic(`Tu numero Es: ${ctx.from}`);
+      await gotoFlow(flowChooseNumber);
     },
     flowChooseNumber
-      
   );
 
+async function analyzeImage(localPath) {
+  const imageBuffer = fs.readFileSync(localPath);
+  const base64Image = imageBuffer.toString('base64');
+
+  const chatCompletion = await groq.chat.completions.create({
+    messages: [
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'text',
+            text: '¿Esta imagen es un comprobante de pago? Extrae monto, fecha y referencia.',
+          },
+          {
+            type: 'image_url',
+            image_url: {
+              url: `data:image/jpeg;base64,${base64Image}`,
+            },
+          },
+        ],
+      },
+    ],
+    model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+  });
+
+  return chatCompletion.choices[0].message.content;
+}
+export async function getGroqChatCompletion() {
+  return groq.chat.completions.create({
+    messages: [
+      {
+        role: 'user',
+        content: 'Explain the importance of fast language models',
+      },
+    ],
+    model: 'openai/gpt-oss-20b',
+  });
+}
+
 const main = async () => {
-  const adapterFlow = createFlow([flowWelcome,flowChooseNumber]);
+  const adapterFlow = createFlow([
+    flowWelcome,
+    flowChooseNumber,
+    flowAnalyzeImage,
+  ]);
+
+  /* const chatCompletion = await getGroqChatCompletion();
+  // Print the completion returned by the LLM.
+  console.log(chatCompletion.choices[0]?.message?.content || ''); */
 
   const adapterProvider = createProvider(Provider, {
     version: [2, 3000, 1027934701],
